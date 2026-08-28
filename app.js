@@ -11,17 +11,22 @@ import teamRouter from "./routes/teamsRoutes.js";
 import scheduledEvaluationRouter from "./routes/schedullesRoutes.js";
 import evaluationRouter from "./routes/evaluationsRoutes.js";
 const app = express();
+const allowedOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://127.0.0.1:5173"], // حدد الـ origin بالضبط بدلاً من "*"
-    credentials: true, // يقتضي وجود origin محدد وليس "*"
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
-
-// تأكد من إضافة هذا السطر مباشرة بعد cors للتعامل مع preflight requests لكل الطرق
-app.options("*", cors()); // 1. Parsing Body & Cookies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
