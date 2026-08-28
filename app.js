@@ -13,7 +13,7 @@ import evaluationRouter from "./routes/evaluationsRoutes.js";
 const app = express();
 app.use(
   cors({
-    origin: "http://localhost:5173", // Your Vite React frontend URL
+    origin: "*", // Your Vite React frontend URL
     credentials: true, // Allows cookies/headers to be sent
   }),
 ); // 1. Parsing Body & Cookies
