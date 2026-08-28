@@ -11,7 +11,11 @@ import teamRouter from "./routes/teamsRoutes.js";
 import scheduledEvaluationRouter from "./routes/schedullesRoutes.js";
 import evaluationRouter from "./routes/evaluationsRoutes.js";
 const app = express();
-const allowedOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://digillians-front-tool-6wmp.vercel.app",
+];
 
 app.use(
   cors({
