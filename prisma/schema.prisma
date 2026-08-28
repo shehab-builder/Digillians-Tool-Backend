@@ -1,0 +1,198 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum JudgeTitle {
+  PROFESSOR
+  DR
+  ENGINEER
+  MR
+  MS
+}
+
+enum EvaluationStatus {
+  DRAFT
+  SUBMITTED
+  LOCKED
+}
+
+enum CriteriaType {
+  PROJECT
+  STUDENT
+}
+
+// ==========================================
+// CORE MODELS
+// ==========================================
+
+model Admin {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar
+  username     String   @unique @db.VarChar
+  passwordHash String   @map("password_hash") @db.VarChar
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("Admins")
+}
+
+model Track {
+  id       String     @id @default(uuid()) @db.Uuid
+  name     String     @db.VarChar
+  labs     Lab[]
+  teams    Team[]
+  criteria Criteria[]
+
+  @@map("Tracks")
+}
+
+model Lab {
+  id                    String                 @id @default(uuid()) @db.Uuid
+  code                  String                 @db.VarChar
+  building              String?                @db.VarChar
+  floor                 String?                @db.VarChar
+  trackId               String                 @map("track_id") @db.Uuid
+  judgeId               String?                @unique @map("judge_id") @db.Uuid // محكم واحد فقط لكل لاب (1-to-1)
+  
+  track                 Track                  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  judge                 Judge?                 @relation(fields: [judgeId], references: [id], onDelete: SetNull)
+  schedulledEvaluations SchedulledEvaluation[]
+
+  @@map("Labs")
+}
+
+model Judge {
+  id                  String               @id @default(uuid()) @db.Uuid
+  name                String               @db.VarChar
+  title               JudgeTitle?
+  username            String               @unique @db.VarChar
+  passwordHash        String               @map("password_hash") @db.VarChar
+  
+  lab                 Lab?                 // الجانب الآخر من علاقة الـ 1-to-1
+
+  @@map("Judges")
+}
+
+model Team {
+  id                   String                @id @default(uuid()) @db.Uuid
+  name                 String                @db.VarChar
+  projectName          String                @map("project_name") @db.VarChar
+  description          String?               @db.Text
+  cover                String?               @db.VarChar
+  trackId              String                @map("track_id") @db.Uuid
+  
+  track                Track                 @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  students             Student[]
+  schedulledEvaluation SchedulledEvaluation?
+  projectsEvaluation   ProjectsEvaluation?
+
+  @@map("Teams")
+}
+
+model Student {
+  id                 String              @id @default(uuid()) @db.Uuid
+  teamId             String              @map("team_id") @db.Uuid
+  fullName           String              @map("full_name") @db.VarChar
+  studentCode        String?             @unique @map("student_code") @db.VarChar
+  
+  team               Team                @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  studentsEvaluation StudentsEvaluation?
+
+  @@map("Students")
+}
+
+model SchedulledEvaluation {
+  id         String @id @default(uuid()) @db.Uuid
+  sequenceNo Int    @map("sequence_no")
+  teamId     String @unique @map("team_id") @db.Uuid
+  labId      String @map("lab_id") @db.Uuid
+  evaluated  Boolean @default(false)
+  
+  team       Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  lab        Lab    @relation(fields: [labId], references: [id], onDelete: Cascade)
+  studentsEvaluations StudentsEvaluation[]
+  projectEvaluation ProjectsEvaluation? 
+
+
+  @@map("SchedulledEvaluation")
+}
+
+model Criteria {
+  id                      String                   @id @default(uuid()) @db.Uuid
+  trackId                 String                   @map("track_id") @db.Uuid
+  type                    CriteriaType
+  title                   String                   @db.VarChar
+  weight                  Float
+  maxScore                Int                      @map("max_score")
+  
+  track                   Track                    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  projectsEvaluationItems ProjectsEvaluationItem[]
+  studentsEvaluationItems StudentsEvaluationItem[]
+
+  @@map("Criteria")
+}
+
+// ==========================================
+// EVALUATION MODELS
+// ==========================================
+
+model ProjectsEvaluation {
+  id          String                   @id @default(uuid()) @db.Uuid
+  teamId      String                   @unique @map("team_id") @db.Uuid
+  status      EvaluationStatus         @default(DRAFT)
+  sEvalId     String                   @map("s_eval_id") @db.Uuid @unique
+  version     Int                      @default(1)
+  submittedAt DateTime?                @map("submitted_at") @db.Timestamptz
+  
+  team        Team                     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  sEval       SchedulledEvaluation     @relation(fields: [sEvalId],references: [id],onDelete: Cascade)
+  items       ProjectsEvaluationItem[]
+  @@map("Projects_Evaluation")
+}
+
+model ProjectsEvaluationItem {
+  id           String             @id @default(uuid()) @db.Uuid
+  evaluationId String             @map("evaluation_id") @db.Uuid
+  criteriaId   String             @map("criteria_id") @db.Uuid
+  score        Int
+  
+  evaluation   ProjectsEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  criteria     Criteria           @relation(fields: [criteriaId], references: [id], onDelete: Restrict)
+
+  @@map("Projects_Evaluation_Item")
+}
+
+model StudentsEvaluation {
+  id          String                  @id @default(uuid()) @db.Uuid
+  studentId   String                  @unique @map("student_id") @db.Uuid
+  sEvalId     String                  @map("s_eval_id") @db.Uuid
+  status      EvaluationStatus        @default(DRAFT)
+  version     Int                     @default(1)
+  submittedAt DateTime?               @map("submitted_at") @db.Timestamptz
+  
+  student     Student                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  items       StudentsEvaluationItem[]
+  sEval       SchedulledEvaluation   @relation(fields: [sEvalId],references: [id],onDelete: Cascade)
+
+  @@map("Students_Evaluation")
+}
+
+model StudentsEvaluationItem {
+  id           String             @id @default(uuid()) @db.Uuid
+  evaluationId String             @map("evaluation_id") @db.Uuid
+  criteriaId   String             @map("criteria_id") @db.Uuid
+  score        Int
+  
+  evaluation   StudentsEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  criteria     Criteria           @relation(fields: [criteriaId], references: [id], onDelete: Restrict)
+
+  @@map("Students_Evaluation_Item")
+}
