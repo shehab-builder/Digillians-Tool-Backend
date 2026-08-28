@@ -13,10 +13,15 @@ import evaluationRouter from "./routes/evaluationsRoutes.js";
 const app = express();
 app.use(
   cors({
-    origin: "*", // Your Vite React frontend URL
-    credentials: true, // Allows cookies/headers to be sent
+    origin: ["http://localhost:5173", "http://127.0.0.1:5173"], // حدد الـ origin بالضبط بدلاً من "*"
+    credentials: true, // يقتضي وجود origin محدد وليس "*"
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
-); // 1. Parsing Body & Cookies
+);
+
+// تأكد من إضافة هذا السطر مباشرة بعد cors للتعامل مع preflight requests لكل الطرق
+app.options("*", cors()); // 1. Parsing Body & Cookies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
