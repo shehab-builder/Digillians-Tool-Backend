@@ -77,9 +77,9 @@ export const login = catchAsync(async (req, res, next) => {
   // 7. Attach HTTP-Only Cookie
   res.cookie("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 12 * 60 * 60 * 1000, // 12 hours
+    secure: process.env.NODE_ENV === "production", // true in production (HTTPS)
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 'none' required for cross-domain Vercel frontend
+    maxAge: 24 * 60 * 60 * 1000,
   });
 
   // 8. Return response (excluding passwordHash)

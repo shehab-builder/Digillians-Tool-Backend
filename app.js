@@ -16,22 +16,14 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
-  "https://digillians-front-tool-6wmp.vercel.app",
+  "https://digilians-front-tool-6wmp.vercel.app",
 ];
 
-// 1. CORS Middleware (Must be defined first)
+// 1. CORS Middleware
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // السماح بالطلبات التي لا تحوي origin (مثل Postman أو Server-to-Server) أو إذا كان في القائمة
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error("Blocked by CORS policy"));
-    },
+    origin: allowedOrigins,
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
