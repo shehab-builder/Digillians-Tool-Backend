@@ -16,7 +16,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
-  "https://digilians-front-tool-6wmp.vercel.app",
+  "https://digillians-front-tool-6wmp.vercel.app",
 ];
 
 // 1. CORS Middleware
